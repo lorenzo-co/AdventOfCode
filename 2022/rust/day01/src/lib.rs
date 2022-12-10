@@ -12,6 +12,24 @@ pub fn process_part1(input: &str) -> String {
     result.to_string()
 }
 
+pub fn process_part2(input: &str) -> String {
+    let mut result = input
+        .split("\n\n")
+        .map(|elf_items| {
+            elf_items
+                .lines()
+                .map(|item| item.parse::<u32>().unwrap())
+                .sum::<u32>()
+        })
+        .collect::<Vec<_>>();
+
+    result.sort_by(|a,b| b.cmp(a));
+
+    let top3_sum: u32 = result.iter().take(3).sum();
+
+    top3_sum.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
