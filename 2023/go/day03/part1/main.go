@@ -78,12 +78,10 @@ func hasAdjacentSymbol(line string, row int, start int, length int, lines []stri
 	}
 
 	if lines[row][safeStart] != '.' && re.MatchString(string(lines[row][safeStart])) {
-		// fmt.Print(row, string(lines[row][safeStart]))
 		return true
 	}
 
 	if lines[row][safeStart+length+1] != '.' && re.MatchString(string(lines[row][safeStart+length+1])) {
-		//fmt.Print(row, string(lines[row][safeStart+length+1]))
 
 		return true
 	}

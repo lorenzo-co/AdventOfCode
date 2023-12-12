@@ -1,71 +1,158 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
+type Coordinates struct {
+	Row    int
+	Column int
+}
+
 func main() {
-	file, err := os.Open("../input")
+	content, err := os.ReadFile("../input")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	idSum := 0
+	lines := strings.Split(string(content), "\n")
+	totalAsterisks := 0
+	possibleGears := 0
 
-	for scanner.Scan() {
-		idSum += getMinCubesNumber(scanner.Text())
+	for row, line := range lines {
+		gearsColumn := findGear(line, row, lines)
+
+		totalAsterisks += len(gearsColumn)
+		for _, col := range gearsColumn {
+			adjacentNumbers := hasAdjacentNumbers(row, col, 1, lines)
+
+			fmt.Println(row, adjacentNumbers)
+		}
 	}
 
-	fmt.Println(idSum)
+	fmt.Println(totalAsterisks)
+	fmt.Println(possibleGears)
 }
 
-func getMinCubesNumber(line string) int {
-	trimmed := strings.TrimPrefix(line, "Game ")
-	gameIdAndSets := strings.Split(trimmed, ":")
+func findGear(line string, row int, lines []string) []int {
+	gearsCol := []int{}
 
-	setsText := gameIdAndSets[1]
+	for pos, val := range line {
+		if string(val) == "*" {
+			gearsCol = append(gearsCol, pos)
+		}
+	}
 
-	setsList := strings.Split(setsText, ";")
+	return gearsCol
+}
 
-	fmt.Println(line)
+func hasAdjacentNumbers(row int, start int, length int, lines []string) []int {
+	var safeStart int
+	var safeThreeBefore int
+	var safeEnd int
+	var safeThreeAfter int
 
-	reds, greens, blues := 0, 0, 0
+	numbers := []int{}
 
-	for _, set := range setsList {
-		cubeCounts := strings.Split(set, ",")
+	if start > 2 {
+		safeStart = start - 1
+		safeThreeBefore = start - 3
+	} else {
+		if start > 0 {
+			safeStart = start - 1
+		} else {
+			safeStart = start
+		}
+	}
 
-		for _, cubeCount := range cubeCounts {
-			reNumber := regexp.MustCompile(`\d+`)
+	if start < len(lines[row])-3 {
+		safeEnd = start + 1
+		safeThreeAfter = start + 4
+	} else {
+		if start < len(lines[row])-1 {
+			safeStart = start + 1
+		} else {
+			safeStart = start
+		}
+	}
 
-			number, err := strconv.Atoi(reNumber.FindString(cubeCount))
+	if row > 0 {
+		textNumbers := strings.Split(strings.Trim(lines[row-1][safeThreeBefore:safeThreeAfter], "."), ".")
 
-			if err != nil {
-				panic(err)
-			}
-
-			if strings.HasSuffix(cubeCount, "red") {
-				reds = max(reds, number)
-			}
-
-			if strings.HasSuffix(cubeCount, "green") {
-				greens = max(greens, number)
-			}
-
-			if strings.HasSuffix(cubeCount, "blue") {
-				blues = max(blues, number)
+		for _, text := range textNumbers {
+			i, err := strconv.Atoi(text)
+			if err == nil {
+				numbers = append(numbers, i)
 			}
 		}
 	}
 
-	fmt.Println(reds, greens, blues)
+	if unicode.IsDigit(rune(lines[row][safeStart])) {
+		text := strings.Trim(lines[row][safeThreeBefore:safeStart+1], ".")
 
-	return reds * greens * blues
+		i, err := strconv.Atoi(text)
+		if err == nil {
+			numbers = append(numbers, i)
+		}
+	}
+
+	if unicode.IsDigit(rune(lines[row][safeEnd])) {
+		text := strings.Trim(lines[row][safeEnd:safeThreeAfter], ".")
+
+		i, err := strconv.Atoi(text)
+		if err == nil {
+			numbers = append(numbers, i)
+		}
+	}
+
+	if row > 0 {
+		textNumbers := strings.Split(strings.Trim(lines[row+1][safeThreeBefore:safeThreeAfter], "."), ".")
+
+		for _, text := range textNumbers {
+			i, err := strconv.Atoi(text)
+			if err == nil {
+				numbers = append(numbers, i)
+			}
+		}
+	}
+
+	return numbers
 }
+
+/* func linePartsSum(line string, row int, lines []string) int {
+	lineSum := 0
+	for col := 0; col < len(line); col++ {
+		if unicode.IsDigit(rune(line[col])) {
+			numberLength := getNumberLength(line, col)
+
+			if hasAdjacentSymbol(line, row, col, numberLength, lines) {
+				number, err := strconv.Atoi(line[col : col+numberLength])
+
+				if err != nil {
+					panic(err)
+				}
+
+				lineSum += number
+			}
+
+			col += numberLength
+		}
+	}
+	return lineSum
+}
+
+func getNumberLength(line string, index int) int {
+	length := 1
+	for index < len(line) && unicode.IsDigit(rune(line[index+1])) {
+		length += 1
+		index += 1
+	}
+
+	return length
+}
+*/
